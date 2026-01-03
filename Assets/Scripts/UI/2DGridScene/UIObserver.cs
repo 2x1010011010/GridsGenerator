@@ -7,12 +7,10 @@ namespace UI._2DGridScene
   {
     [SerializeField] private GridSpawner _gridSpawner;
 
-    private void GenerateHexGridButtonClicked()
-    {
-    }
+    private void GenerateHexGridButtonClicked() => 
+      _gridSpawner.SpawnHexGrid();
 
-    private void GenerateRectGridButtonClicked()
-    {
-    }
+    private void GenerateRectGridButtonClicked() => 
+      _gridSpawner.SpawnRectGrid();
   }
 }
