@@ -21,6 +21,7 @@ namespace _2DGrids
         for (int x = 0; x < _spawnerConfig.Width; x++)
         {
           var cellObject = Instantiate(_spawnerConfig.HexCellPrefab, GetHexCoordinates(x, y), Quaternion.identity);
+          cellObject.GetComponent<SpriteRenderer>().color = _spawnerConfig.Default;
           _hexGrid[x, y] = cellObject.GetComponent<HexCell2D>();
         }
     }
@@ -35,6 +36,7 @@ namespace _2DGrids
       for (int x = 0; x < _spawnerConfig.Width; x++)
       {
         var cellObject = Instantiate(_spawnerConfig.RectCellPrefab, GetRectCoordinates(x, y), Quaternion.identity);
+        cellObject.GetComponent<SpriteRenderer>().color = _spawnerConfig.Default;
         _rectGrid[x, y] = cellObject.GetComponent<RectCell2D>();
       }
     }

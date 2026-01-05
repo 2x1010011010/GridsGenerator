@@ -571,14 +571,14 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1635274688}
   - {fileID: 1620146586}
+  - {fileID: 1635274688}
   m_Father: {fileID: 1204724576}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 75}
-  m_SizeDelta: {x: 0, y: 150}
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 0}
+  m_AnchoredPosition: {x: 0, y: 60}
+  m_SizeDelta: {x: 1898, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1225704855
 MonoBehaviour:
@@ -795,8 +795,9 @@ GameObject:
   - component: {fileID: 1620146589}
   - component: {fileID: 1620146588}
   - component: {fileID: 1620146587}
+  - component: {fileID: 1620146590}
   m_Layer: 0
-  m_Name: Button (1)
+  m_Name: RectGridButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -820,7 +821,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 250, y: 120}
+  m_SizeDelta: {x: 250, y: 110}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1620146587
 MonoBehaviour:
@@ -904,6 +905,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1620146585}
   m_CullTransparentMesh: 1
+--- !u!114 &1620146590
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1620146585}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23d8b481ebbc44118eaec8a18b14cd28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UI._2DGridScene.GenerateRectGridButton
+  _button: {fileID: 1620146587}
 --- !u!1 &1635274687
 GameObject:
   m_ObjectHideFlags: 0
@@ -916,8 +930,9 @@ GameObject:
   - component: {fileID: 1635274691}
   - component: {fileID: 1635274690}
   - component: {fileID: 1635274689}
+  - component: {fileID: 1635274692}
   m_Layer: 0
-  m_Name: Button
+  m_Name: HexGridButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -941,7 +956,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 250, y: 120}
+  m_SizeDelta: {x: 250, y: 110}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1635274689
 MonoBehaviour:
@@ -1025,6 +1040,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1635274687}
   m_CullTransparentMesh: 1
+--- !u!114 &1635274692
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1635274687}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 763b9ffbac7d45df98d31d687af12c5e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UI._2DGridScene.GenerateHexGridButton
+  _button: {fileID: 1635274689}
 --- !u!1 &1701190654
 GameObject:
   m_ObjectHideFlags: 0
@@ -1034,6 +1062,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1701190655}
+  - component: {fileID: 1701190656}
   m_Layer: 0
   m_Name: UIObserver
   m_TagString: Untagged
@@ -1058,6 +1087,21 @@ Transform:
   - {fileID: 2103200787}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1701190656
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1701190654}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9bf17d9c4b5a4831b00af86896f34391, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UI._2DGridScene.UIObserver
+  _gridSpawner: {fileID: 977810181}
+  _generateHexGridButton: {fileID: 1635274692}
+  _generateRectGridButton: {fileID: 1620146590}
 --- !u!1 &1928750611
 GameObject:
   m_ObjectHideFlags: 0
