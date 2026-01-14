@@ -4,17 +4,14 @@ Shader "Custom/URP/FastWorldWater"
     {
         _WaterColor ("Water Color", Color) = (0.05, 0.35, 0.55, 1.0)
 
-        // --- VERTEX WAVES (CHEAP) ---
         _WaveAmplitude ("Wave Amplitude", Float) = 0.03
         _WaveFrequency ("Wave Frequency", Float) = 0.6
         _WaveSpeed ("Wave Speed", Float) = 0.6
-
-        // --- NORMAL MAP (SINGLE SAMPLE) ---
+        
         _NormalMap ("Normal Map", 2D) = "bump" {}
         _NormalTiling ("Normal Tiling (World)", Float) = 0.25
         _NormalStrength ("Normal Strength", Float) = 1.0
-
-        // --- FRESNEL ---
+        
         _FresnelPower ("Fresnel Power", Float) = 3.0
     }
 
@@ -36,8 +33,7 @@ Shader "Custom/URP/FastWorldWater"
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-
-            // === URP CORE ===
+            
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
             struct Attributes
@@ -67,16 +63,12 @@ Shader "Custom/URP/FastWorldWater"
 
             float _FresnelPower;
 
-            // =========================
-            // VERTEX
-            // =========================
             Varyings vert (Attributes v)
             {
                 Varyings o;
 
                 float3 worldPos = TransformObjectToWorld(v.positionOS.xyz);
 
-                // --- CHEAP WAVE (1 SIN) ---
                 float t = _Time.y * _WaveSpeed;
                 float wave = sin((worldPos.x + worldPos.z) * _WaveFrequency + t);
 
@@ -89,13 +81,9 @@ Shader "Custom/URP/FastWorldWater"
 
                 return o;
             }
-
-            // =========================
-            // FRAGMENT
-            // =========================
+            
             float4 frag (Varyings i) : SV_Target
             {
-                // --- WORLD SPACE NORMAL ---
                 float2 uv =
                     i.worldPos.xz * _NormalTiling +
                     _Time.y * float2(0.04, 0.03);
@@ -109,7 +97,6 @@ Shader "Custom/URP/FastWorldWater"
                 float3 normal =
                     normalize(i.worldNormal + normalTex);
 
-                // --- FRESNEL (COLOR BOOST, NOT WHITE) ---
                 float fresnel =
                     pow(1.0 - saturate(dot(i.viewDir, normal)), _FresnelPower);
 
