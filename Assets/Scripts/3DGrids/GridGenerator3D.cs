@@ -1,40 +1,80 @@
+using UnityEngine;
+
 namespace _3DGrids
 {
   public class GridGenerator3D
   {
-    private readonly int _lenght;
-    private readonly int _width;
-    private readonly int _height;
-    private VirtualCell3D[,,] _grid;
-    
-    public GridGenerator3D(int lenght, int height, int width)
+    private int _length;
+    private int _height;
+    private int _width;
+
+    public GridGenerator3D(int length, int height, int width)
     {
-      _lenght = lenght;
-      _width = width;
+      _length = length;
       _height = height;
+      _width = width;
     }
 
-    public VirtualCell3D[,,] GenerateFlatMap()
+    public VirtualCell3D[,,] GenerateFlatNoise(NoiseSettings s)
     {
-      _grid = new VirtualCell3D[_lenght, 1, _width];
-      
-      for (var x = 0; x < _lenght; x++)
-        for (var z = 0; z < _width; z++)
-          _grid[x, 0, z] = new VirtualCell3D(x, 0, z);
-      
-      return _grid;
+      var grid = new VirtualCell3D[_length, 1, _width];
+
+      for (int x = 0; x < _length; x++)
+      for (int z = 0; z < _width; z++)
+      {
+        float noise = SampleNoise(x, z, s);
+
+        CellType type =
+          noise < s.WaterLevel    ? CellType.Water :
+          noise < s.MountainLevel ? CellType.Grass :
+                                    CellType.Rock;
+
+        grid[x, 0, z] = new VirtualCell3D(new Vector3Int(x, 0, z), type);
+      }
+
+      return grid;
     }
 
-    public VirtualCell3D[,,] Generate3DMap()
+    public VirtualCell3D[,,] Generate3DNoise(NoiseSettings s)
     {
-      _grid = new VirtualCell3D[_lenght, _height, _width];
-      
-      for (var x = 0; x < _lenght; x++)
-        for (var y = 0; y < _height; y++)  
-          for (var z = 0; z < _width; z++)
-            _grid[x, y, z] = new VirtualCell3D(x, y, z);
-      
-      return _grid;
+      var grid = new VirtualCell3D[_length, _height, _width];
+
+      for (int x = 0; x < _length; x++)
+      for (int z = 0; z < _width; z++)
+      {
+        float noise = SampleNoise(x, z, s);
+        int columnHeight = Mathf.Clamp(
+          Mathf.FloorToInt(noise * s.HeightMultiplier),
+          0, _height - 1);
+
+        for (int y = 0; y <= columnHeight; y++)
+        {
+          var type = ResolveType(y, columnHeight, noise, s);
+          grid[x, y, z] = new VirtualCell3D(new Vector3Int(x, y, z), type);
+        }
+      }
+
+      return grid;
+    }
+
+    private float SampleNoise(int x, int z, NoiseSettings s)
+    {
+      return Mathf.PerlinNoise(
+        (x + s.Offset.x) / s.NoiseScale,
+        (z + s.Offset.y) / s.NoiseScale
+      );
+    }
+
+    private CellType ResolveType(int y, int maxY, float noise, NoiseSettings s)
+    {
+      if (y == maxY)
+      {
+        if (noise < s.WaterLevel)    return CellType.Water;
+        if (noise < s.MountainLevel) return CellType.Grass;
+        return CellType.Rock;
+      }
+
+      return CellType.Sand;
     }
   }
 }
