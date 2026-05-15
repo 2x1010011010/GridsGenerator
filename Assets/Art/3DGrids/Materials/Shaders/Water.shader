@@ -1,109 +1,125 @@
-Shader "Custom/URP/FastWorldWater"
+Shader "Custom/WaterURP_RippleOnly"
 {
     Properties
     {
-        _WaterColor ("Water Color", Color) = (0.05, 0.35, 0.55, 1.0)
+        _ShallowColor ("Shallow Color", Color) = (0.2,0.6,0.8,0.6)
+        _DeepColor ("Deep Color", Color) = (0.0,0.15,0.3,0.8)
 
-        _WaveAmplitude ("Wave Amplitude", Float) = 0.03
-        _WaveFrequency ("Wave Frequency", Float) = 0.6
-        _WaveSpeed ("Wave Speed", Float) = 0.6
-        
-        _NormalMap ("Normal Map", 2D) = "bump" {}
-        _NormalTiling ("Normal Tiling (World)", Float) = 0.25
-        _NormalStrength ("Normal Strength", Float) = 1.0
-        
-        _FresnelPower ("Fresnel Power", Float) = 3.0
+        _NormalMap1 ("Normal Map 1", 2D) = "bump" {}
+        _NormalMap2 ("Normal Map 2", 2D) = "bump" {}
+
+        _RippleSpeed1 ("Ripple Speed 1", Float) = 0.05
+        _RippleSpeed2 ("Ripple Speed 2", Float) = -0.03
+        _RippleStrength ("Ripple Strength", Range(0,1)) = 0.15
+
+        _DistortionStrength ("UV Distortion", Range(0,0.1)) = 0.02
+
+        _Smoothness ("Smoothness", Range(0,1)) = 0.9
     }
 
     SubShader
     {
-        Tags
-        {
-            "RenderPipeline"="UniversalPipeline"
-            "Queue"="Geometry"
-            "RenderType"="Transparent"
-        }
-
-        ZWrite On
-        Blend Off
-        Cull Back
+        Tags { "RenderType"="Transparent" "Queue"="Transparent" }
 
         Pass
         {
+            Name "ForwardLit"
+            Tags { "LightMode"="UniversalForward" }
+
+            Blend SrcAlpha OneMinusSrcAlpha
+            ZWrite Off
+            Cull Back
+
             HLSLPROGRAM
+
             #pragma vertex vert
             #pragma fragment frag
-            
+
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
             struct Attributes
             {
                 float4 positionOS : POSITION;
-                float3 normalOS   : NORMAL;
+                float2 uv : TEXCOORD0;
+                float3 normalOS : NORMAL;
             };
 
             struct Varyings
             {
                 float4 positionHCS : SV_POSITION;
-                float3 worldPos    : TEXCOORD0;
-                float3 worldNormal : TEXCOORD1;
-                float3 viewDir     : TEXCOORD2;
+                float2 uv : TEXCOORD0;
+                float3 normalWS : TEXCOORD1;
+                float3 positionWS : TEXCOORD2;
             };
 
-            float4 _WaterColor;
+            TEXTURE2D(_NormalMap1);
+            SAMPLER(sampler_NormalMap1);
 
-            float _WaveAmplitude;
-            float _WaveFrequency;
-            float _WaveSpeed;
+            TEXTURE2D(_NormalMap2);
+            SAMPLER(sampler_NormalMap2);
 
-            TEXTURE2D(_NormalMap);
-            SAMPLER(sampler_NormalMap);
-            float _NormalTiling;
-            float _NormalStrength;
+            float4 _ShallowColor;
+            float4 _DeepColor;
 
-            float _FresnelPower;
+            float _RippleSpeed1;
+            float _RippleSpeed2;
+            float _RippleStrength;
+            float _DistortionStrength;
 
-            Varyings vert (Attributes v)
+            float _Smoothness;
+
+            Varyings vert(Attributes input)
             {
-                Varyings o;
+                Varyings output;
 
-                float3 worldPos = TransformObjectToWorld(v.positionOS.xyz);
+                VertexPositionInputs posInputs = GetVertexPositionInputs(input.positionOS.xyz);
+                VertexNormalInputs normalInputs = GetVertexNormalInputs(input.normalOS);
 
-                float t = _Time.y * _WaveSpeed;
-                float wave = sin((worldPos.x + worldPos.z) * _WaveFrequency + t);
+                output.positionHCS = posInputs.positionCS;
+                output.positionWS = posInputs.positionWS;
+                output.normalWS = normalInputs.normalWS;
+                output.uv = input.uv;
 
-                worldPos.y += wave * _WaveAmplitude;
-
-                o.positionHCS = TransformWorldToHClip(worldPos);
-                o.worldPos = worldPos;
-                o.worldNormal = TransformObjectToWorldNormal(v.normalOS);
-                o.viewDir = normalize(_WorldSpaceCameraPos - worldPos);
-
-                return o;
+                return output;
             }
-            
-            float4 frag (Varyings i) : SV_Target
-            {
-                float2 uv =
-                    i.worldPos.xz * _NormalTiling +
-                    _Time.y * float2(0.04, 0.03);
 
-                float3 normalTex = UnpackNormal(
-                    SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, uv)
+            half4 frag(Varyings input) : SV_Target
+            {
+                // === UV Distortion (лёгкое "дыхание" поверхности) ===
+                float2 distortion = float2(
+                    sin(input.uv.y * 10 + _Time.y) * _DistortionStrength,
+                    cos(input.uv.x * 10 + _Time.y) * _DistortionStrength
                 );
 
-                normalTex.xy *= _NormalStrength;
+                float2 uv1 = input.uv + distortion + _Time.y * _RippleSpeed1;
+                float2 uv2 = input.uv - distortion + _Time.y * _RippleSpeed2;
 
-                float3 normal =
-                    normalize(i.worldNormal + normalTex);
+                float3 n1 = UnpackNormal(SAMPLE_TEXTURE2D(_NormalMap1, sampler_NormalMap1, uv1));
+                float3 n2 = UnpackNormal(SAMPLE_TEXTURE2D(_NormalMap2, sampler_NormalMap2, uv2));
 
-                float fresnel =
-                    pow(1.0 - saturate(dot(i.viewDir, normal)), _FresnelPower);
+                float3 rippleNormal = normalize(n1 + n2);
+                rippleNormal.xy *= _RippleStrength;
 
-                float3 color =
-                    lerp(_WaterColor.rgb, _WaterColor.rgb * 1.3, fresnel);
+                float3 normalWS = normalize(input.normalWS + rippleNormal);
 
-                return float4(color, 1.0);
+                Light mainLight = GetMainLight();
+                float3 lightDir = normalize(mainLight.direction);
+
+                float NdotL = saturate(dot(normalWS, -lightDir));
+                float3 diffuse = mainLight.color * NdotL;
+
+                float3 viewDir = normalize(_WorldSpaceCameraPos - input.positionWS);
+                float fresnel = pow(1 - saturate(dot(normalWS, viewDir)), 5);
+
+                float depthFactor = saturate(input.positionWS.y * 0.05);
+                float4 waterColor = lerp(_ShallowColor, _DeepColor, depthFactor);
+
+                waterColor.rgb += fresnel * 0.25;
+
+                float3 finalColor = waterColor.rgb * (0.5 + diffuse);
+
+                return float4(finalColor, waterColor.a);
             }
 
             ENDHLSL
